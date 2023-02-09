@@ -1,0 +1,67 @@
+
+
+SELECT payer_user_name                                                                                           as '付款方名称',
+       partner                                                                                                   as '商户编号',
+       out_trade_no                                                                                              as '商户订单号',
+       distribute_no                                                                                             as '代付订单号',
+       pay_total_no                                                                                              as '支付总单号',
+       payee_login_name                                                                                          as '收款方登录名',
+       payee_user_id                                                                                             as '收款方用户编号',
+       payee_user_name                                                                                           as '收款方名称',
+       bank_card                                                                                                 as '@decrypt(收款方银行账号)',
+       bank_detail                                                                                               as '收款方银行开户行',
+       product_id                                                                                                as '银行产品编号',
+       product_name                                                                                              as '银行产品名称',
+       pay_amount                                                                                              as '代付金额',
+       pay_total_amount                                                                                              as '交易总金额',
+       settle_amount                                                                                              as '实时结算手续费',
+       case distribute_type
+           when 1 then '余额'
+           when 2 then '银行卡'
+           else distribute_type end                                                                              as '代付订单类型',
+       case pay_status
+           when 1 then '未支付'
+           when 2 then '支付中'
+           when 3 then '成功'
+           when 4 then '失败'
+           else pay_status end                                                                                   as '代付交易状态',
+       case inner_status
+           when 1 then '正常'
+           when 2 then '作废'
+           when 3 then '已退汇'
+           when 4 then '订单成功,支付失败'
+           else inner_status end                                                                                 as '代付内部状态',
+       error_code                                                                                                as '错误码',
+       outer_desc                                                                                                as '错误描述',
+       plat_partner                                                                                              as '平台商户编号',
+       attach                                                                                                    as '商户附言',
+       bank_attach                                                                                               as '银行附言',
+       date_format(create_time, '%Y-%m-%d %T')                                                                   as '创建时间',
+       date_format(pay_time, '%Y-%m-%d %T')                                                                      as '支付时间',
+       case order_source when 1 then '文件' when 2 then 'API接入' else order_source end                              AS '订单来源',
+       case card_type
+           when 0 then '对私卡'
+           when 1 then '存折'
+           when 2 then '对公卡'
+           when 3 then '卡折'
+           else card_type end                                                                                    as '卡类型',
+       case trade_type_1
+           when 18 then 'API代付'
+           when 28 then '报盘代付'
+           ELSE trade_type_1 END                                                                                 AS '交易类型1',
+       case trade_type_2 when 14 then '余额' when 15 then '银行卡' ELSE trade_type_2 END                              AS '交易类型2',
+       case trade_type_3 when 99 then '不限' ELSE trade_type_3 END                                                 AS '交易类型3',
+       plat_partner                                                                                              AS '平台商户号'
+FROM db_order.t_distribute_salary
+WHERE partner = '${partner}'
+  and out_trade_no = '${out_trade_no}'
+  and distribute_no = '${distribute_no}'
+  and payee_user_name = '${payee_name}'
+  and pay_status = '${distribute_order_status}'
+  and inner_status = '${distribute_inner_status}'
+  and bank_card = '${bank_card}'
+  and create_time >= '${real_create_time_start}'
+  AND create_time < '${real_create_time_end}'
+  and pay_time >= '${real_pay_time_start}'
+  AND create_time < '${real_pay_time_end}'
+ORDER BY create_time DESC
